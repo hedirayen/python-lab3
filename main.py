@@ -5,7 +5,7 @@ from scipy.fftpack import dct, idct
 from skimage.metrics import peak_signal_noise_ratio as psnr
 
 # =========================
-# 1. CHARGER IMAGE
+# 1. CHARGER IMAGE azeazeza
 # =========================
 image = cv2.imread("image.jpg", cv2.IMREAD_GRAYSCALE)
 if image is None:

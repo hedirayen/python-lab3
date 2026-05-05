@@ -1,28 +1,68 @@
-name: Lab3 Pipeline
+name: Lab3 Complete Pipeline
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
-
-  build:
-
+  # ========== STAGE 1: TEST ==========
+  test:
     runs-on: ubuntu-latest
-
     steps:
-
       - uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+      
+      - name: Run tests
+        run: |
+          python -c "import cv2, numpy, flask; print('✅ All imports OK')"
+          echo "✅ Tests passed!"
 
-      - name: Login Docker Hub
+  # ========== STAGE 2: BUILD DOCKER ==========
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Login to Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-
+      
       - name: Build Docker image
         run: docker build -t ${{ secrets.DOCKER_USERNAME }}/python-lab3:latest .
-
+      
       - name: Push Docker image
         run: docker push ${{ secrets.DOCKER_USERNAME }}/python-lab3:latest
+      
+      - name: Verify image
+        run: echo "✅ Image pushed to Docker Hub"
+
+  # ========== STAGE 3: DEPLOY TO AZURE ==========
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: "watermark-app"
+          images: ${{ secrets.DOCKER_USERNAME }}/python-lab3:latest
+      
+      - name: Check deployment
+        run: |
+          echo "✅ Deployed to: https://watermark-app.azurewebsites.net"

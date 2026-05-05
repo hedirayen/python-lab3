@@ -1,0 +1,28 @@
+name: Lab3 Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - uses: actions/checkout@v3
+
+      - name: Login Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build Docker image
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/python-lab3:latest .
+
+      - name: Push Docker image
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/python-lab3:latest
